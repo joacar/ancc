@@ -1,4 +1,7 @@
+using System;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Hosting;
 
 namespace ancc
@@ -14,7 +17,39 @@ namespace ancc
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseStartup<Startup>()
+                        .ConfigureKestrel(options =>
+                        {
+                            options.ConfigureHttpsDefaults(https =>
+                            {
+                                https.ClientCertificateValidation += (certificate2, chain, errors) =>
+                                {
+                                    return true;
+                                };
+                                https.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+                                https.ServerCertificate = CreateServerCertificate();
+                            });
+                        });
                 });
+
+        private static X509Certificate2 CreateServerCertificate()
+        {
+            const string envFilePath = "ASPNETCORE_Kestrel__Certificates__Default__Path";
+            var cert = Environment.GetEnvironmentVariable(envFilePath);
+            if (string.IsNullOrEmpty(cert))
+            {
+                throw new InvalidOperationException($"Path to certificate (pfx) MUST be specified in environment variable {envFilePath}");
+            }
+
+            const string envPassword = "ASPNETCORE_Kestrel__Certificates__Default__Password";
+            var password = Environment.GetEnvironmentVariable(envPassword);
+            if (string.IsNullOrEmpty(password))
+            {
+                throw new InvalidOperationException($"Certificate password MUST be specified in environment variable {envPassword}");
+            }
+
+            return new X509Certificate2(cert, password);
+        }
     }
+
 }
