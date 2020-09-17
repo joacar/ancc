@@ -28,6 +28,51 @@ Trying to get my head around mTLS and client certificate authentication.
    1. Select the generated `.cer` file
 1. Import certificate revocation list. Same as above but select `.crl` file
 
+## Kestrel
+
+Follow the steps in [Application](#Application) to setup authentication.
+
+The certificate and password are read from environment variables and I've created a function to read them and create the certificate used for the server.
+
+```c#
+private static X509Certificate2 CreateServerCertificate()
+{
+    // Error handling removed for brevity
+    const string envFilePath = "ASPNETCORE_Kestrel__Certificates__Default__Path";
+    const string envPassword = "ASPNETCORE_Kestrel__Certificates__Default__Password";
+    var cert = var password = Environment.GetEnvironmentVariable(envFilePath);
+    var password = Environment.GetEnvironmentVariable(envPassword);
+    return new X509Certificate2(cert, password);
+}
+```
+
+We need to configure Kestrel to request client certificate and we must provide a server certificate used to validate the client certificate. This is configured when the host is built, in this case in Program.cs.
+
+```c#
+webBuilder
+    .UseStartup<Startup>()
+    .ConfigureKestrel(options =>
+    {
+        options.ConfigureHttpsDefaults(https =>
+        {
+            https.ClientCertificateValidation += (certificate2, chain, errors) =>
+            {
+                // Perform any checks here
+                return true;
+            };
+            https.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+            https.ServerCertificate = CreateServerCertificate();
+        });
+    });
+```
+
+Is the above the mTLS part? Then the certificate authentication might not be needed if another security scheme is employed, example OAuth2 Client Credentials grant with bearer token.
+
+### Observations
+
+* Should Kestrel configure server certificate automatically if present with values in `ASPNETCORE_Kestrel__Certificates__Default__{Path,Password}`?
+* No options for client certificate, example `ASPNETCORE_Kestrel__Client_Certificates__Default__`
+
 ## IIS/IIS Express
 
 Run file `iis.cmd` to update relevant configuration sections. The section `iisClientCertificateMappingAuthentication` must be enabled and the section `access` should have `sslFlags` set to "Ssl, SslNegotiateCert, SslRequireCert"`.
