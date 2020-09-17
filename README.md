@@ -5,6 +5,7 @@ Trying to get my head around mTLS and client certificate authentication.
 ## TODOS
 
 * Instruct IIS Express to use server certificate and thus only accept client certificates issued by server certificate.
+* Instruct Kestrel only accept client certificates signed by/issued by server certificate. Is this m-TLS?
 
 ## Observations
 
@@ -66,12 +67,13 @@ webBuilder
     });
 ```
 
-Is the above the mTLS part? Then the certificate authentication might not be needed if another security scheme is employed, example OAuth2 Client Credentials grant with bearer token.
+Is the above the mTLS part? Then the certificate authentication might not be needed if another security scheme is employed, example OAuth2 Client Credentials grant with bearer token. I would like to see that only client certificates signed by/issued by the server certificate are allowed to connect.
 
 ### Observations
 
 * Should Kestrel configure server certificate automatically if present with values in `ASPNETCORE_Kestrel__Certificates__Default__{Path,Password}`?
 * No options for client certificate, example `ASPNETCORE_Kestrel__Client_Certificates__Default__`
+* How to ensure that only client certificates signed by/issued by server certificate are allowed?
 
 ## IIS/IIS Express
 

@@ -24,6 +24,7 @@ namespace ancc
                             {
                                 https.ClientCertificateValidation += (certificate2, chain, errors) =>
                                 {
+                                    // TODO: How to ensure that client certificates issued by server certificate are allowed?
                                     return true;
                                 };
                                 https.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
