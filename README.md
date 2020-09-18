@@ -2,6 +2,19 @@
 
 Trying to get my head around mTLS and client certificate authentication.
 
+Mutual TLS
+
+1. Application owner generates a root certificate
+1. Generated root certificate is used to generate a server certificate
+1. Generated root certificate is used to generate a client certificate
+1. Client certificate is sent to client to grant access to application
+
+Could it possibly be used like this
+1. Application owner generates a root certificate
+1. Generated root certificate is used to generate a server certificate
+1. Client sends a certificate to be signed by root certificate
+1. Signed client certificate is used to grant access to application
+
 ## TODOS
 
 * Instruct IIS Express to use server certificate and thus only accept client certificates issued by server certificate.
@@ -75,6 +88,10 @@ Is the above the mTLS part? Then the certificate authentication might not be nee
 * No options for client certificate, example `ASPNETCORE_Kestrel__Client_Certificates__Default__`
 * How to ensure that only client certificates signed by/issued by server certificate are allowed?
 
+### Issues
+
+> The specified network password is not correct
+
 ## IIS/IIS Express
 
 Run file `iis.cmd` to update relevant configuration sections. The section `iisClientCertificateMappingAuthentication` must be enabled and the section `access` should have `sslFlags` set to "Ssl, SslNegotiateCert, SslRequireCert"`.
@@ -118,3 +135,9 @@ See [certificates](#Certificates) step 2.
 > RevocationStatusUnknown The revocation function was unable to check revocation for the certificate.
 
 See [certificates](#Certificates) step 3 or disable recovation check `options.RevocationMode = X509RevocationMode.NoCheck`
+
+## Thanks to
+
+* http://www.yangsoft.com/blog/?p=105 - certctr.cmd
+* https://docs.microsoft.com/en-us/previous-versions/msp-n-p/ff650751(v=pandp.10)?redirectedfrom=MSDN - certctr.cmd
+* https://blog.jayway.com/2014/09/03/creating-self-signed-certificates-with-makecert-exe-for-development/ - certctr2.cmd

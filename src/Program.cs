@@ -1,8 +1,9 @@
+using ancc.mTLS;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Https;
-using Microsoft.Extensions.Hosting;
 
 namespace ancc
 {
@@ -15,21 +16,22 @@ namespace ancc
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<IClientCertificateValidator, MutualTls>();
+                    services.Configure<ClientCertificateValidationOptions>(options =>
+                    {
+                        options.Issuer = "CN=ancc_CARoot";
+                        options.Thumbprint = "df40194d88ba62ef246f5643c5ad5719bd3c6452";
+                        options.Certificate = CreateServerCertificate();
+                    });
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>()
                         .ConfigureKestrel(options =>
                         {
-                            options.ConfigureHttpsDefaults(https =>
-                            {
-                                https.ClientCertificateValidation += (certificate2, chain, errors) =>
-                                {
-                                    // TODO: How to ensure that client certificates issued by server certificate are allowed?
-                                    return true;
-                                };
-                                https.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
-                                https.ServerCertificate = CreateServerCertificate();
-                            });
+                            options.ConfigureMutualTLS();
                         });
                 });
 
