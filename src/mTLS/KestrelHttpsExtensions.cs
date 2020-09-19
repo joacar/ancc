@@ -14,13 +14,14 @@ namespace ancc.mTLS
             options.ConfigureHttpsDefaults(connectionOptions =>
             {
                 connectionOptions.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
-                // The ServerCertificate will be set if ASPNETCORE_Kestrel__Certificates__Default__{Path,Password} is set correctly.
-                // It is set after this method has finished so it's not directly available here,
-                // but is when validation callback is called. Inspection the IOptions<HttpsCon..>
-                // shows that it's null.
-                var validator = options.ApplicationServices.GetRequiredService<IClientCertificateValidator>();
-                connectionOptions.ClientCertificateValidation = validator.Validate;
-
+                // Without a custom validator only client certificates signed/issued by (?)
+                // are allowed. Interested in how this is done.
+                var validator = options.ApplicationServices.GetService<IClientCertificateValidator>();
+                if (validator != null)
+                {
+                    connectionOptions.ClientCertificateValidation = validator.Validate;
+                }
+                
                 configureHttpsDefaults?.Invoke(connectionOptions);
             });
         }

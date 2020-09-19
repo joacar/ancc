@@ -18,11 +18,12 @@ namespace ancc
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton<IClientCertificateValidator, MutualTls>();
+                    // For custom validation register instance of IClientCertificateValidator
+                    //services.AddSingleton<IClientCertificateValidator, ClientCertificateValidator>();
                     services.Configure<ClientCertificateValidationOptions>(options =>
                     {
-                        options.Issuer = "CN=ancc_CARoot";
-                        options.Thumbprint = "df40194d88ba62ef246f5643c5ad5719bd3c6452";
+                        options.Issuer = "CN=localhost";
+                        options.Thumbprint = "160e94deb46511a0a2ee07fef020b9a9d9da422c";
                         options.Certificate = CreateServerCertificate();
                     });
                 })
@@ -37,6 +38,8 @@ namespace ancc
 
         private static X509Certificate2 CreateServerCertificate()
         {
+            // This is how Kestrel sets DefaultCertificate but I having trouble retrieving it
+            // to use in validation.
             const string envFilePath = "ASPNETCORE_Kestrel__Certificates__Default__Path";
             var cert = Environment.GetEnvironmentVariable(envFilePath);
             if (string.IsNullOrEmpty(cert))

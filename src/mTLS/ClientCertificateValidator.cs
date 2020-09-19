@@ -5,11 +5,11 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace ancc.mTLS
 {
-    internal sealed class MutualTls : IClientCertificateValidator
+    internal sealed class ClientCertificateValidator : IClientCertificateValidator
     {
         private readonly ClientCertificateValidationOptions _options;
 
-        public MutualTls(IOptions<ClientCertificateValidationOptions> options)
+        public ClientCertificateValidator(IOptions<ClientCertificateValidationOptions> options)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options.Value));
             if (string.IsNullOrEmpty(_options.Issuer))
@@ -24,6 +24,11 @@ namespace ancc.mTLS
             //  1. Root CA
             //  2. Server certificate
             // which ever is most correct
+
+            if (!clientCertificate.Verify())
+            {
+                return false;
+            }
 
             if (!string.Equals(_options.Issuer, clientCertificate.Issuer, StringComparison.InvariantCultureIgnoreCase))
             {

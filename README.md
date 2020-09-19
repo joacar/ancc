@@ -85,12 +85,17 @@ Is the above the mTLS part? Then the certificate authentication might not be nee
 ### Observations
 
 * Should Kestrel configure server certificate automatically if present with values in `ASPNETCORE_Kestrel__Certificates__Default__{Path,Password}`?
-* No options for client certificate, example `ASPNETCORE_Kestrel__Client_Certificates__Default__`
+   
+   It does, but the value in `HttpsConnectionAdapterOptions.ServerCertificate` is not accessible.
 * How to ensure that only client certificates signed by/issued by server certificate are allowed?
 
 ### Issues
 
 > The specified network password is not correct
+
+I saw this when I specified only file name in `ASPNETCORE_Kestre__..Path` and moved pfx to `bin\Debug\netcoreapp3.1\`.
+Trying it again later correctly shows The specified file couldn't be found.
+Check that the `.pfx` files are imported and not only `.cer` - maybe.
 
 ## IIS/IIS Express
 

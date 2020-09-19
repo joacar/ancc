@@ -11,6 +11,8 @@ IF "%ERRORLEVEL%" NEQ "0" (
 )
 
 SET PWD=P4ssword
+ECHO Generating pfx file require password otherwise it will fail when imported to store
+ECHO with "Password doesn't match". Using password '%PWD%'
 
 SET ROOT_SUFFIX=_CARoot
 
@@ -30,7 +32,7 @@ SET root=%bn%%ROOT_SUFFIX%
 
 :ROOT
 ECHO [ROOT] Creating certificate ...
-makecert -n "CN=%root%" -a sha512 -r -pe -cy authority -sv %root%.pvk %root%.cer
+makecert -n "CN=localhost" -a sha512 -r -pe -cy authority -sv %root%.pvk %root%.cer
 REM -sr localmachine -ss root 
 
 IF "%ERRORLEVEL%" NEQ "0" (
@@ -94,7 +96,7 @@ SET root=%bn%%ROOT_SUFFIX%
 
 ECHO [CLIENT] Creating certificate ...
 REM 1.3.6.1.5.5.7.3.2 means Client Certificate
-makecert.exe -n "CN=%client%" -a sha512 -iv %root%.pvk -ic %root%.cer -pe ^
+makecert.exe -n "CN=localhost" -a sha512 -iv %root%.pvk -ic %root%.cer -pe ^
 -sky exchange -eku 1.3.6.1.5.5.7.3.2 -sv %client%.pvk ^
 -sr currentuser -ss my %client%.cer
 

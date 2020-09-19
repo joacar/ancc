@@ -8,10 +8,4 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="3.1.8" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="test_server.pfx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
