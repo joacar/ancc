@@ -1,10 +1,6 @@
 @ECHO off
 SETLOCAL
 
-REM Thanks to:
-REM http://www.yangsoft.com/blog/?p=105
-REM https://docs.microsoft.com/en-us/previous-versions/msp-n-p/ff650751(v=pandp.10)?redirectedfrom=MSDN
-
 REM Check if makecert is in path
 REM Example: "C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\makecert.exe"
 where /Q "$path:makecert"
@@ -41,12 +37,12 @@ IF "%ERRORLEVEL%" NEQ "0" (
 )
 
 SET /P key="Enter name for client certificate: "
-ECHO Generating client certificate. This should be imported to User certificate store
+ECHO Generating client certificate and importing to user personal
 makecert -sk %key% -iv %pvk% -n "CN=%key%" -ic %cer% -sr currentuser -ss my -sky signature -pe
 
 
 echo Generate .pfx file ...
-pvk2pfx -pvk %pvk% -spc %cer% -pfx %name%.pfx
+pvk2pfx -pvk %pvk% -pi test -spc %cer% -pfx %name%.pfx
 
 echo Generated files:
 DIR /B *.pvk *.cer *.pfx *.crl

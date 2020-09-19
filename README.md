@@ -2,9 +2,23 @@
 
 Trying to get my head around mTLS and client certificate authentication.
 
+Mutual TLS
+
+1. Application owner generates a root certificate
+1. Generated root certificate is used to generate a server certificate
+1. Generated root certificate is used to generate a client certificate
+1. Client certificate is sent to client to grant access to application
+
+Could it possibly be used like this
+1. Application owner generates a root certificate
+1. Generated root certificate is used to generate a server certificate
+1. Client sends a certificate to be signed by root certificate
+1. Signed client certificate is used to grant access to application
+
 ## TODOS
 
 * Instruct IIS Express to use server certificate and thus only accept client certificates issued by server certificate.
+* Instruct Kestrel only accept client certificates signed by/issued by server certificate. Is this m-TLS?
 
 ## Observations
 
@@ -27,6 +41,61 @@ Trying to get my head around mTLS and client certificate authentication.
    1. All Tasks > Import
    1. Select the generated `.cer` file
 1. Import certificate revocation list. Same as above but select `.crl` file
+
+## Kestrel
+
+Follow the steps in [Application](#Application) to setup authentication.
+
+The certificate and password are read from environment variables and I've created a function to read them and create the certificate used for the server.
+
+```c#
+private static X509Certificate2 CreateServerCertificate()
+{
+    // Error handling removed for brevity
+    const string envFilePath = "ASPNETCORE_Kestrel__Certificates__Default__Path";
+    const string envPassword = "ASPNETCORE_Kestrel__Certificates__Default__Password";
+    var cert = var password = Environment.GetEnvironmentVariable(envFilePath);
+    var password = Environment.GetEnvironmentVariable(envPassword);
+    return new X509Certificate2(cert, password);
+}
+```
+
+We need to configure Kestrel to request client certificate and we must provide a server certificate used to validate the client certificate. This is configured when the host is built, in this case in Program.cs.
+
+```c#
+webBuilder
+    .UseStartup<Startup>()
+    .ConfigureKestrel(options =>
+    {
+        options.ConfigureHttpsDefaults(https =>
+        {
+            https.ClientCertificateValidation += (certificate2, chain, errors) =>
+            {
+                // Perform any checks here
+                return true;
+            };
+            https.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+            https.ServerCertificate = CreateServerCertificate();
+        });
+    });
+```
+
+Is the above the mTLS part? Then the certificate authentication might not be needed if another security scheme is employed, example OAuth2 Client Credentials grant with bearer token. I would like to see that only client certificates signed by/issued by the server certificate are allowed to connect.
+
+### Observations
+
+* Should Kestrel configure server certificate automatically if present with values in `ASPNETCORE_Kestrel__Certificates__Default__{Path,Password}`?
+   
+   It does, but the value in `HttpsConnectionAdapterOptions.ServerCertificate` is not accessible.
+* How to ensure that only client certificates signed by/issued by server certificate are allowed?
+
+### Issues
+
+> The specified network password is not correct
+
+I saw this when I specified only file name in `ASPNETCORE_Kestre__..Path` and moved pfx to `bin\Debug\netcoreapp3.1\`.
+Trying it again later correctly shows The specified file couldn't be found.
+Check that the `.pfx` files are imported and not only `.cer` - maybe.
 
 ## IIS/IIS Express
 
@@ -71,3 +140,9 @@ See [certificates](#Certificates) step 2.
 > RevocationStatusUnknown The revocation function was unable to check revocation for the certificate.
 
 See [certificates](#Certificates) step 3 or disable recovation check `options.RevocationMode = X509RevocationMode.NoCheck`
+
+## Thanks to
+
+* http://www.yangsoft.com/blog/?p=105 - certctr.cmd
+* https://docs.microsoft.com/en-us/previous-versions/msp-n-p/ff650751(v=pandp.10)?redirectedfrom=MSDN - certctr.cmd
+* https://blog.jayway.com/2014/09/03/creating-self-signed-certificates-with-makecert-exe-for-development/ - certctr2.cmd
